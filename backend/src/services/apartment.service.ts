@@ -119,7 +119,7 @@ export const apartmentService = {
     }
 
     // Parse form data (since multer gives us string values for numbers/booleans)
-    const parsedData = {
+    const parsedData:any = {
       title: data.title,
       slug: data.slug,
       description: data.description,
@@ -185,7 +185,7 @@ export const apartmentService = {
     }
 
     // Parse form data
-    const parsedData = {
+    const parsedData:any = {
       title: data.title,
       slug: data.slug,
       description: data.description,
