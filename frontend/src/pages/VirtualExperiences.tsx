@@ -122,7 +122,7 @@ const VirtualExperiences = () => {
       title: 'Private Balcony',
       subtitle: 'City views',
       type: 'panorama',
-      image: '/procurement_4.jpg',
+      image: '/panorama.png',
     },
   ];
 
