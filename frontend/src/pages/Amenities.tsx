@@ -1,6 +1,7 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import { ChevronRight, Zap, Droplets, Utensils, Dumbbell, Film, Leaf, Heart } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 const FadeIn = ({ children, delay = 0, className = '' }: { children: ReactNode; delay?: number; className?: string }) => {
@@ -10,105 +11,169 @@ const FadeIn = ({ children, delay = 0, className = '' }: { children: ReactNode; 
   );
 };
 
-const PoolIcon = ({ className = '' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-  </svg>
-);
-
-const DumbbellIcon = ({ className = '' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-  </svg>
-);
-
-const WineGlassIcon = ({ className = '' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
-
-const FilmIcon = ({ className = '' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-  </svg>
-);
-
-const PlantIcon = ({ className = '' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-  </svg>
-);
-
-const SpaIcon = ({ className = '' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-  </svg>
-);
-
 const Amenities = () => {
   const { theme } = useTheme();
+  const [hoveredAmenity, setHoveredAmenity] = useState<string | null>(null);
 
   const amenitiesList = [
-    { name: 'Infinity Pool', description: 'Relax in our stunning rooftop infinity pool with panoramic city views.', image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=luxury%20infinity%20pool%20night%20modern%20design%20city%20skyline%20premium%20lighting&image_size=landscape_16_9', icon: <PoolIcon className="w-12 h-12 text-amber-400" /> },
-    { name: 'Fitness Center', description: 'State-of-the-art gym with premium equipment and personal training services.', image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=modern%20luxury%20gym%20fitness%20center%20premium%20equipment%20elegant%20design&image_size=landscape_16_9', icon: <DumbbellIcon className="w-12 h-12 text-amber-400" /> },
-    { name: 'Wine Lounge', description: 'Exclusive wine tasting lounge with an extensive collection of fine wines.', image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=elegant%20wine%20lounge%20luxury%20interior%20warm%20lighting%20wood%20design&image_size=landscape_16_9', icon: <WineGlassIcon className="w-12 h-12 text-amber-400" /> },
-    { name: 'Private Cinema', description: 'Premium home theater experience for private screenings and entertainment.', image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=luxury%20private%20cinema%20home%20theater%20plush%20seating%20premium%20lighting&image_size=landscape_16_9', icon: <FilmIcon className="w-12 h-12 text-amber-400" /> },
-    { name: 'Sky Garden', description: 'Beautiful rooftop green space perfect for relaxation and social gatherings.', image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=rooftop%20sky%20garden%20luxury%20green%20space%20modern%20landscaping%20city%20view&image_size=landscape_16_9', icon: <PlantIcon className="w-12 h-12 text-amber-400" /> },
-    { name: 'Spa & Wellness', description: 'Luxury spa facilities offering massage, skincare, and wellness treatments.', image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=luxury%20spa%20wellness%20center%20relaxing%20atmosphere%20elegant%20design&image_size=landscape_16_9', icon: <SpaIcon className="w-12 h-12 text-amber-400" /> },
+    { 
+      name: 'Infinity Pool', 
+      description: 'Relax in our stunning rooftop infinity pool with panoramic city views. Experience breathtaking sunsets and city lights while enjoying a refreshing swim.',
+      image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=luxury%20infinity%20pool%20night%20modern%20design%20city%20skyline%20premium%20lighting&image_size=landscape_16_9', 
+      icon: Droplets,
+      features: ['Heated pool', 'Poolside bar', 'Sun loungers', 'City views']
+    },
+    { 
+      name: 'Fitness Center', 
+      description: 'State-of-the-art gym with premium equipment and personal training services. Achieve your fitness goals in our luxury wellness facility.',
+      image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=modern%20luxury%20gym%20fitness%20center%20premium%20equipment%20elegant%20design&image_size=landscape_16_9', 
+      icon: Dumbbell,
+      features: ['24/7 access', 'Personal training', 'Yoga studio', 'Premium equipment']
+    },
+    { 
+      name: 'Wine Lounge', 
+      description: 'Exclusive wine tasting lounge with an extensive collection of fine wines. A perfect setting for sophisticated gatherings and celebrations.',
+      image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=elegant%20wine%20lounge%20luxury%20interior%20warm%20lighting%20wood%20design&image_size=landscape_16_9', 
+      icon: Utensils,
+      features: ['Wine cellar', 'Tasting events', 'Cigar lounge', 'Private rooms']
+    },
+    { 
+      name: 'Private Cinema', 
+      description: 'Premium home theater experience for private screenings and entertainment. Enjoy the latest films in ultimate comfort and style.',
+      image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=luxury%20private%20cinema%20home%20theater%20plush%20seating%20premium%20lighting&image_size=landscape_16_9', 
+      icon: Film,
+      features: ['Dolby Atmos', '4K projection', 'Comfort seating', 'Concierge service']
+    },
+    { 
+      name: 'Sky Garden', 
+      description: 'Beautiful rooftop green space perfect for relaxation and social gatherings. A tranquil escape in the heart of the city.',
+      image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=rooftop%20sky%20garden%20luxury%20green%20space%20modern%20landscaping%20city%20view&image_size=landscape_16_9', 
+      icon: Leaf,
+      features: ['Meditation area', 'Lounge seating', 'Greenery', 'Event space']
+    },
+    { 
+      name: 'Spa & Wellness', 
+      description: 'Luxury spa facilities offering massage, skincare, and wellness treatments. Rejuvenate your body and mind in our serene sanctuary.',
+      image: 'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=luxury%20spa%20wellness%20center%20relaxing%20atmosphere%20elegant%20design&image_size=landscape_16_9', 
+      icon: Heart,
+      features: ['Massage rooms', 'Sauna & steam', 'Facials', 'Wellness packages']
+    },
   ];
 
   return (
     <div className={`pt-24 pb-16 transition-colors duration-300 ${
       theme === 'dark' ? 'bg-gradient-to-b from-black via-gray-900 to-black' : 'bg-gradient-to-br from-white via-gray-50 to-amber-50'
     }`}>
-      <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
+      <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <div className={`w-full h-full transition-colors duration-300 ${
             theme === 'dark' ? 'bg-gradient-to-b from-gray-900 via-gray-800 to-black' : 'bg-gradient-to-b from-white via-amber-50 to-white'
           }`} />
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            className="absolute inset-0 w-full h-full object-cover opacity-70"
-            poster="https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=luxury%20apartment%20amenities%20overview%20pool%20gym%20cinema%20elegant%20design%20cinematic&image_size=landscape_16_9"
-            onError={(e) => console.error('Video error:', e)}
-          >
-            <source src="/amenities.mp4" type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 via-transparent to-black/40" />
         </div>
-        <div className="relative z-10 text-center px-4">
+        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
           <FadeIn>
-            <p className="text-lg text-amber-400 tracking-[0.3em] mb-4 uppercase">Premium Experience</p>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6">Our Amenities</h1>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/20 rounded-full mb-6">
+              <Zap className="w-5 h-5 text-amber-400" />
+              <p className="text-amber-400 tracking-[0.2em] uppercase font-medium">Premium Experience</p>
+            </div>
+            <h1 className="text-6xl md:text-8xl font-bold mb-6 leading-tight">
+              <span className="text-amber-400">Luxury</span> Amenities
+            </h1>
+            <p className={`text-xl max-w-2xl mx-auto ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+              Discover world-class facilities designed for your ultimate comfort and enjoyment
+            </p>
           </FadeIn>
         </div>
       </section>
+
       <section className="py-24">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12">
+          <div className="grid gap-8">
             {amenitiesList.map((amenity, i) => (
               <FadeIn key={i} delay={i * 0.1}>
-                <motion.div whileHover={{ y: -8 }} className={`rounded-2xl overflow-hidden border transition-colors duration-300 ${
-                  theme === 'dark' ? 'bg-gray-800/50 border-gray-700/50' : 'bg-white border-amber-100'
-                }`}>
-                  <div className="aspect-video overflow-hidden">
-                    <img src={amenity.image} alt={amenity.name} className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" />
-                  </div>
-                  <div className="p-8">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-16 h-16 bg-amber-500/20 rounded-xl flex items-center justify-center">
-                        {amenity.icon}
+                <motion.div 
+                  whileHover={{ y: -4 }}
+                  onMouseEnter={() => setHoveredAmenity(amenity.name)}
+                  onMouseLeave={() => setHoveredAmenity(null)}
+                  className={`relative overflow-hidden rounded-3xl border transition-all duration-500 ${
+                    theme === 'dark' ? 'bg-gray-800/50 border-gray-700/50' : 'bg-white border-amber-100'
+                  }`}
+                >
+                  <div className="grid md:grid-cols-2 gap-0">
+                    <div className="relative aspect-video md:aspect-auto overflow-hidden">
+                      <motion.img 
+                        src={amenity.image} 
+                        alt={amenity.name} 
+                        className="w-full h-full object-cover"
+                        animate={{ scale: hoveredAmenity === amenity.name ? 1.1 : 1 }}
+                        transition={{ duration: 0.7 }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                      <div className="absolute bottom-6 left-6">
+                        <div className="w-16 h-16 bg-amber-500/90 rounded-2xl flex items-center justify-center">
+                          <amenity.icon className="w-8 h-8 text-black" />
+                        </div>
                       </div>
-                      <h3 className="text-2xl font-bold">{amenity.name}</h3>
                     </div>
-                    <p className={`text-lg ${theme === 'dark' ? 'text-gray-400' : 'text-gray-700'}`}>{amenity.description}</p>
+                    
+                    <div className="p-8 md:p-12 flex flex-col justify-center">
+                      <h3 className={`text-3xl md:text-4xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        {amenity.name}
+                      </h3>
+                      <p className={`text-lg mb-8 leading-relaxed ${theme === 'dark' ? 'text-gray-400' : 'text-gray-700'}`}>
+                        {amenity.description}
+                      </p>
+                      
+                      <div className="grid grid-cols-2 gap-4 mb-8">
+                        {amenity.features.map((feature, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-amber-500 rounded-full" />
+                            <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{feature}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <motion.button
+                        whileHover={{ x: 4 }}
+                        className="inline-flex items-center gap-2 text-amber-500 font-semibold text-lg"
+                      >
+                        Explore more <ChevronRight className="w-5 h-5" />
+                      </motion.button>
+                    </div>
                   </div>
                 </motion.div>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className={`py-24 ${theme === 'dark' ? 'bg-gray-900/30' : 'bg-amber-50/50'}`}>
+        <div className="container mx-auto px-4">
+          <FadeIn>
+            <div className="text-center mb-16">
+              <p className="text-amber-400 tracking-[0.3em] mb-4 uppercase">Why Choose Us</p>
+              <h2 className={`text-4xl md:text-5xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                Unmatched Lifestyle
+              </h2>
+            </div>
+          </FadeIn>
+
+          <div className="grid md:grid-cols-4 gap-8">
+            {[
+              { number: '24/7', label: 'Concierge Service' },
+              { number: '5★', label: 'Premium Experience' },
+              { number: '100%', label: 'Privacy & Security' },
+              { number: '∞', label: 'Infinite Comfort' }
+            ].map((stat, i) => (
+              <FadeIn key={i} delay={i * 0.1}>
+                <div className={`text-center p-8 rounded-2xl border ${
+                  theme === 'dark' ? 'bg-gray-800/30 border-gray-700/30' : 'bg-white border-amber-100'
+                }`}>
+                  <div className="text-5xl font-bold text-amber-400 mb-3">{stat.number}</div>
+                  <p className={`font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{stat.label}</p>
+                </div>
               </FadeIn>
             ))}
           </div>

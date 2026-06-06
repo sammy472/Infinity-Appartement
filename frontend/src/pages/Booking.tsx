@@ -1,4 +1,6 @@
 import { useState, useEffect, ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Building2, CalendarDays, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { useTheme } from '../context/ThemeContext';
@@ -19,10 +21,58 @@ interface Apartment {
   available: boolean;
 }
 
+interface BookingFormData {
+  apartment: string;
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+  name: string;
+  email: string;
+  phone: string;
+}
+
+interface BookingLocationState {
+  apartmentId?: string;
+  apartmentTitle?: string;
+}
+
+const createInitialFormData = (apartment = ''): BookingFormData => ({
+  apartment,
+  checkIn: '',
+  checkOut: '',
+  guests: 1,
+  name: '',
+  email: '',
+  phone: '',
+});
+
+const toDateInputValue = (date: Date) => date.toISOString().slice(0, 10);
+
+const addDays = (value: string, days: number) => {
+  const date = new Date(`${value}T00:00:00`);
+  date.setDate(date.getDate() + days);
+  return toDateInputValue(date);
+};
+
+const getNightCount = (checkIn: string, checkOut: string) => {
+  if (!checkIn || !checkOut) return 0;
+  const start = new Date(`${checkIn}T00:00:00`).getTime();
+  const end = new Date(`${checkOut}T00:00:00`).getTime();
+  return Math.max(0, Math.round((end - start) / 86400000));
+};
+
+const formatPrice = (price: number | string) => {
+  if (price === '') return '';
+  return typeof price === 'number' ? price.toLocaleString() : price;
+};
+
 const Booking = () => {
   const { theme } = useTheme();
+  const location = useLocation();
+  const bookingState = location.state as BookingLocationState | null;
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({ apartment: '', checkIn: '', checkOut: '', guests: 1, name: '', email: '', phone: '' });
+  const [formData, setFormData] = useState<BookingFormData>(() => createInitialFormData(bookingState?.apartmentId || ''));
+  const [dateError, setDateError] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,13 +101,22 @@ const Booking = () => {
     fetchApartments();
   }, []);
 
-  const getSelectedApartment = () => {
-    return apartments.find((apt) => apt.id === formData.apartment);
-  };
+  const today = toDateInputValue(new Date());
+  const minimumCheckOut = formData.checkIn ? addDays(formData.checkIn, 1) : today;
+  const stayLength = getNightCount(formData.checkIn, formData.checkOut);
+  const apartmentOptions = formData.apartment && bookingState?.apartmentTitle && !apartments.some((apt) => apt.id === formData.apartment)
+    ? [{ id: formData.apartment, title: bookingState.apartmentTitle, price: '', available: true }, ...apartments]
+    : apartments;
+  const selectedApartment = apartmentOptions.find((apt) => apt.id === formData.apartment);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (step === 1 && formData.checkIn && formData.checkOut && formData.checkOut <= formData.checkIn) {
+      setDateError('Choose a check-out date after your check-in date.');
+      return;
+    }
     if (step < 3) {
+      setDateError('');
       setStep(step + 1);
       return;
     }
@@ -96,9 +155,25 @@ const Booking = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const value = e.target.type === 'number' ? parseInt(e.target.value) || 1 : e.target.value;
-    setFormData({ ...formData, [e.target.name]: value });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setDateError('');
+
+    if (name === 'guests') {
+      setFormData((current) => ({ ...current, guests: Math.min(10, Math.max(1, parseInt(value) || 1)) }));
+      return;
+    }
+
+    if (name === 'checkIn') {
+      setFormData((current) => ({
+        ...current,
+        checkIn: value,
+        checkOut: current.checkOut && current.checkOut <= value ? '' : current.checkOut,
+      }));
+      return;
+    }
+
+    setFormData((current) => ({ ...current, [name]: value }));
   };
 
   if (submitted) {
@@ -109,23 +184,15 @@ const Booking = () => {
         <div className="container mx-auto px-4">
           <FadeIn>
             <div className="max-w-2xl mx-auto text-center">
-              <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-8"><span className="text-5xl font-bold text-green-400">✓</span></div>
+              <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-8">
+                <CheckCircle className="h-12 w-12 text-green-400" />
+              </div>
               <h1 className={`text-4xl md:text-5xl font-bold mb-6 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Booking Request Submitted!</h1>
               <p className={`text-xl mb-8 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Thank you for your booking request. Our team will review it and get back to you within 24 hours.</p>
-              <button onClick={() => { setSubmitted(false); setStep(1); setFormData({ apartment: '', checkIn: '', checkOut: '', guests: 1, name: '', email: '', phone: '' }); }} className="px-10 py-4 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-sm transition-all">Book Another</button>
+              <button onClick={() => { setSubmitted(false); setStep(1); setFormData(createInitialFormData()); }} className="px-10 py-4 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-sm transition-all">Book Another</button>
             </div>
           </FadeIn>
         </div>
-        <footer className={`py-12 border-t transition-colors duration-300 ${
-          theme === 'dark' ? 'border-gray-800 bg-black' : 'border-amber-100 bg-white'
-        }`}>
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-              <div className="text-2xl font-bold bg-gradient-to-r from-amber-300 to-amber-600 bg-clip-text text-transparent">Infinity</div>
-              <p className="text-gray-500 text-sm">© 2026 Infinity Appartements. All rights reserved.</p>
-            </div>
-          </div>
-        </footer>
       </div>
     );
   }
@@ -159,30 +226,59 @@ const Booking = () => {
           }`}>
             <form onSubmit={handleSubmit}>
               {step === 1 && <FadeIn><div className="space-y-6">
+                {bookingState?.apartmentTitle && formData.apartment && (
+                  <div className={`flex items-start gap-3 rounded-sm border p-4 ${
+                    theme === 'dark' ? 'bg-amber-500/10 border-amber-500/20 text-amber-100' : 'bg-amber-50 border-amber-100 text-amber-900'
+                  }`}>
+                    <Building2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" />
+                    <p className="text-sm">Selected from residence details: <span className="font-semibold">{bookingState.apartmentTitle}</span></p>
+                  </div>
+                )}
                 <div>
                   <label className={`block mb-2 font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>Select Apartment</label>
                   <select name="apartment" value={formData.apartment} onChange={handleChange} required className={`w-full px-4 py-3.5 border rounded-sm focus:outline-none focus:border-amber-500 transition-colors ${
                     theme === 'dark' ? 'bg-gray-900/80 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'
                   }`}>
                     <option value="">Select an apartment</option>
-                    {apartments.map((apt) => (
+                    {apartmentOptions.map((apt) => (
                       <option key={apt.id} value={apt.id}>
-                        {apt.title} - ${typeof apt.price === 'number' ? apt.price.toLocaleString() : apt.price}/mo
+                        {apt.title}{formatPrice(apt.price) ? ` - $${formatPrice(apt.price)}/mo` : ''}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div className="grid md:grid-cols-3 gap-6">
-                  <div><label className={`block mb-2 font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>Check-in Date</label><input type="date" name="checkIn" value={formData.checkIn} onChange={handleChange} required className={`w-full px-4 py-3.5 border rounded-sm focus:outline-none focus:border-amber-500 transition-colors ${
+                  <div><label className={`block mb-2 font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>Check-in Date</label><input type="date" name="checkIn" value={formData.checkIn} onChange={handleChange} min={today} required className={`w-full px-4 py-3.5 border rounded-sm focus:outline-none focus:border-amber-500 transition-colors ${
                     theme === 'dark' ? 'bg-gray-900/80 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'
                   }`} /></div>
-                  <div><label className={`block mb-2 font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>Check-out Date</label><input type="date" name="checkOut" value={formData.checkOut} onChange={handleChange} required className={`w-full px-4 py-3.5 border rounded-sm focus:outline-none focus:border-amber-500 transition-colors ${
+                  <div><label className={`block mb-2 font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>Check-out Date</label><input type="date" name="checkOut" value={formData.checkOut} onChange={handleChange} min={minimumCheckOut} required className={`w-full px-4 py-3.5 border rounded-sm focus:outline-none focus:border-amber-500 transition-colors ${
                     theme === 'dark' ? 'bg-gray-900/80 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'
                   }`} /></div>
                   <div><label className={`block mb-2 font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>Number of Guests</label><input type="number" name="guests" value={formData.guests} onChange={handleChange} min="1" max="10" required className={`w-full px-4 py-3.5 border rounded-sm focus:outline-none focus:border-amber-500 transition-colors ${
                     theme === 'dark' ? 'bg-gray-900/80 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'
                   }`} /></div>
                 </div>
+                {dateError && <p className="text-sm font-medium text-red-400">{dateError}</p>}
+                {(selectedApartment || stayLength > 0) && (
+                  <div className={`grid gap-4 rounded-xl border p-5 md:grid-cols-2 ${
+                    theme === 'dark' ? 'bg-gray-900/50 border-gray-700/50' : 'bg-white border-amber-100'
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <Building2 className="h-5 w-5 text-amber-400" />
+                      <div>
+                        <p className={`text-xs uppercase tracking-[0.2em] ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>Residence</p>
+                        <p className="font-semibold">{selectedApartment?.title || 'Choose an apartment'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CalendarDays className="h-5 w-5 text-amber-400" />
+                      <div>
+                        <p className={`text-xs uppercase tracking-[0.2em] ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>Stay Length</p>
+                        <p className="font-semibold">{stayLength > 0 ? `${stayLength} night${stayLength === 1 ? '' : 's'}` : 'Select dates'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div></FadeIn>}
               {step === 2 && <FadeIn><div className="space-y-6">
                 <div><label className={`block mb-2 font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'}`}>Full Name</label><input type="text" name="name" value={formData.name} onChange={handleChange} required className={`w-full px-4 py-3.5 border rounded-sm focus:outline-none focus:border-amber-500 transition-colors ${
@@ -202,16 +298,17 @@ const Booking = () => {
                 <div className={`rounded-xl p-6 border transition-colors duration-300 ${
                   theme === 'dark' ? 'bg-gray-900/50 border-gray-700/50' : 'bg-white border-amber-100'
                 }`}>
-                  <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Apartment: {getSelectedApartment()?.title || 'Not selected'}</p>
+                  <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Apartment: {selectedApartment?.title || 'Not selected'}</p>
                   <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Check-in: {formData.checkIn || 'Not set'}</p>
                   <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Check-out: {formData.checkOut || 'Not set'}</p>
+                  <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Nights: {stayLength || 'Not set'}</p>
                   <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Guests: {formData.guests}</p>
                   <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Guest Name: {formData.name || 'Not set'}</p>
                   <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Email: {formData.email || 'Not set'}</p>
-                  {getSelectedApartment() && (
+                  {selectedApartment && formatPrice(selectedApartment.price) && (
                     <div className={`border-t pt-4 mt-4 ${theme === 'dark' ? 'border-gray-700' : 'border-amber-100'}`}>
                       <p className="text-2xl font-bold text-amber-400">
-                        ${typeof getSelectedApartment()?.price === 'number' ? getSelectedApartment()?.price.toLocaleString() : getSelectedApartment()?.price}/mo
+                        ${formatPrice(selectedApartment.price)}/mo
                       </p>
                     </div>
                   )}
@@ -229,16 +326,6 @@ const Booking = () => {
           </div>
         </div>
       </section>
-      <footer className={`py-12 border-t transition-colors duration-300 ${
-        theme === 'dark' ? 'border-gray-800 bg-black' : 'border-amber-100 bg-white'
-      }`}>
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="text-2xl font-bold bg-gradient-to-r from-amber-300 to-amber-600 bg-clip-text text-transparent">Infinity</div>
-            <p className="text-gray-500 text-sm">© 2026 Infinity Appartements. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

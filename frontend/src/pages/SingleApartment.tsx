@@ -5,8 +5,6 @@ import { useInView } from 'react-intersection-observer';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useTheme } from '../context/ThemeContext';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
 
@@ -141,7 +139,6 @@ const SingleApartment = () => {
         <title>{apartment.title} - Infinity Appartements</title>
         <meta name="description" content={apartment.description || `Discover ${apartment.title}, a luxury apartment in ${apartment.location || 'Accra'}.`} />
       </Helmet>
-      <Navbar />
       <section className="relative">
         <div className="aspect-[16/9] max-h-[70vh] overflow-hidden">
           <img 
@@ -290,7 +287,6 @@ const SingleApartment = () => {
           </div>
         </div>
       </section>
-      <Footer />
     </div>
   );
 };
